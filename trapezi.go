@@ -2,7 +2,6 @@ package trapezi
 
 import (
 	"fmt"
-	color "github.com/fatih/color"
 	"github.com/juju/loggo"
 	"io"
 	"unicode/utf8"
@@ -26,14 +25,6 @@ type CustomPrinter struct {
 
 func (p *CustomPrinter) Fprintf(w io.Writer, format string, a ...interface{}) (int, error) {
 	return p.Function(w, format, a...)
-}
-
-type ColorPrinter struct {
-	Color *color.Color
-}
-
-func (p *ColorPrinter) Fprintf(w io.Writer, format string, a ...interface{}) (int, error) {
-	return p.Color.Fprintf(w, format, a...)
 }
 
 type SimpleCell struct {
