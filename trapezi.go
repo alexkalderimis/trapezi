@@ -151,6 +151,15 @@ func Text(value string) *SimpleCell {
 	return &cell
 }
 
+func AlignRight(cell *SimpleCell) *SimpleCell {
+	cell.Align = ALIGN_RIGHT
+	return cell
+}
+
+func TextR(value string) *SimpleCell {
+	return AlignRight(Text(value))
+}
+
 func AlignTable(table []CompoundCell) {
 	if len(table) <= 1 {
 		logger.Debugf("Table already aligned: rows: %d", len(table))
@@ -191,6 +200,18 @@ func alignSimpleCells(column []Cell) {
 	for _, cell := range column {
 		cell.align(maxWidth)
 	}
+}
+
+func Table(lineBreak string, rows []CompoundCell) CompoundCell {
+	cells := make([]Cell, len(rows), len(rows))
+	for i, row := range rows {
+		cells[i] = row
+	}
+	table := CompoundCell{
+		Divider: lineBreak,
+		Cells:   cells,
+	}
+	return table
 }
 
 func alignCompoundCells(column []Cell) {
