@@ -19,7 +19,7 @@ before_script:
 stages:
   - test
 
-format:
+go_test:
   stage: test
   script:
     - go fmt $(go list ./... | grep -v /vendor/)
