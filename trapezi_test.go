@@ -40,6 +40,29 @@ func TestAlignColumn(t *testing.T) {
 	assertRenderEql(cells, want, t)
 }
 
+func TestPrefixesAndSuffixes(t *testing.T) {
+	want := strings.Join([]string{
+		">>> " + "Hello    ",
+		"to       ",
+		"léft     ",
+		"alignment",
+		"with     ",
+		"unicode  " + " <<<",
+	}, "|")
+	cells := Join("|",
+		Text("Hello"),
+		Text("to"),
+		Text("léft"),
+		Text("alignment"),
+		Text("with"),
+		Text("unicode"),
+	)
+	cells.Prefix = ">>> "
+	cells.Suffix = " <<<"
+	alignColumn(cells.Cells)
+	assertRenderEql(cells, want, t)
+}
+
 func TestAlignColumnR(t *testing.T) {
 	want := strings.Join([]string{
 		"Hello    ",
@@ -99,6 +122,37 @@ func TestAlignNested(t *testing.T) {
 	table := Table("/", cells)
 	assertRenderEql(table, want, t)
 }
+
+// TODO
+// func TestAlignMixedColumn(t *testing.T) {
+//   sepA := " || "
+//   sepB := " | "
+//   want := strings.Join([]string{
+//     "Language || SING              || PL                ",
+//     "         || masc | fem | neut || masc  | fem | neut",
+//     "German   || der  | die | das  || die               ",
+//     "Greek    || ο    | η   | το   || οι          | τα  ",
+//     "Italian  || il   | la  | -    || i,gli | le  | -   ",
+//   }, "/")
+//   mfn := func(m, f, n string) Cell {
+//     return Join(sepB, Text(m), Text(f), Text(n))
+//   }
+//   mf_n := func(mf, n string) Cell {
+//     return Join(sepB, Text(mf), Text(n))
+//   }
+//   cells := []CompoundCell{
+//     Join(sepA, Text("Language"), Text("Singular"), Text("Plural")),
+//     Join(sepA, Empty(), mfn("masc", "fem", "neut"), mfn("masc", "fem", "neut")),
+//     Join(sepA, Text("German"), mfn("der", "die", "das"), Text("die")),
+//     Join(sepA, Text("Greek"), mfn("ο", "οι", "το"), mf_n("οι", "τα")),
+//     Join(sepA, Text("Italian"), mfn("il", "la", "-"),
+//       Join(sepA, Join(",", Text("i"), Text("gli")),
+//         Text("le"), Text("-"))),
+//   }
+//   AlignTable(cells)
+//   table := Table("/", cells)
+//   assertRenderEql(table, want, t)
+// }
 
 func assertRenderEql(cell Cell, want string, t *testing.T) {
 	var buff strings.Builder

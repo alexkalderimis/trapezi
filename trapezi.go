@@ -37,11 +37,14 @@ type SimpleCell struct {
 type CompoundCell struct {
 	Cells   []Cell
 	Divider string
+	Prefix  string
+	Suffix  string
 }
 
 const (
 	ALIGN_LEFT  Alignment = iota
 	ALIGN_RIGHT Alignment = iota
+	EXPAND      Alignment = iota // TODO make this work
 )
 
 var (
@@ -77,6 +80,9 @@ func (cell SimpleCell) Render(w io.Writer) (int, error) {
 func (cell CompoundCell) Render(w io.Writer) (int, error) {
 	var needsDivider bool = false
 	var written int = 0
+	if cell.Prefix != "" {
+		fmt.Fprintf(w, cell.Prefix)
+	}
 	for _, child := range cell.Cells {
 		if needsDivider {
 			wrote, err := fmt.Fprint(w, cell.Divider)
@@ -91,6 +97,9 @@ func (cell CompoundCell) Render(w io.Writer) (int, error) {
 			return written, err
 		}
 		needsDivider = true
+	}
+	if cell.Suffix != "" {
+		fmt.Fprintf(w, cell.Suffix)
 	}
 	return written, nil
 }
@@ -151,6 +160,10 @@ func Text(value string) *SimpleCell {
 	return &cell
 }
 
+func Empty() *SimpleCell {
+	return Text("")
+}
+
 func AlignRight(cell *SimpleCell) *SimpleCell {
 	cell.Align = ALIGN_RIGHT
 	return cell
@@ -161,6 +174,17 @@ func TextR(value string) *SimpleCell {
 }
 
 func AlignTable(table []CompoundCell) {
+	var maxWidth = 0
+	for _, row := range table {
+		l := row.length()
+		if l > maxWidth {
+			maxWidth = l
+		}
+	}
+	alignTableTo(table, maxWidth)
+}
+
+func alignTableTo(table []CompoundCell, maxWidth int) {
 	if len(table) <= 1 {
 		logger.Debugf("Table already aligned: rows: %d", len(table))
 		return
@@ -181,15 +205,6 @@ func alignColumn(column []Cell) {
 	if len(column) <= 1 {
 		return
 	}
-	switch column[0].(type) {
-	case *SimpleCell:
-		alignSimpleCells(column)
-	case CompoundCell:
-		alignCompoundCells(column)
-	}
-}
-
-func alignSimpleCells(column []Cell) {
 	maxWidth := 0
 	for _, cell := range column {
 		w := cell.length()
@@ -197,6 +212,21 @@ func alignSimpleCells(column []Cell) {
 			maxWidth = w
 		}
 	}
+	simpleCells := make([]Cell, 0, len(column))
+	compoundCells := make([]Cell, 0, len(column))
+	for _, cell := range column {
+		switch cell.(type) {
+		case *SimpleCell:
+			simpleCells = append(simpleCells, cell)
+		case CompoundCell:
+			compoundCells = append(compoundCells, cell)
+		}
+	}
+	alignSimpleCells(simpleCells, maxWidth)
+	alignCompoundCells(compoundCells, maxWidth)
+}
+
+func alignSimpleCells(column []Cell, maxWidth int) {
 	for _, cell := range column {
 		cell.align(maxWidth)
 	}
@@ -214,11 +244,11 @@ func Table(lineBreak string, rows []CompoundCell) CompoundCell {
 	return table
 }
 
-func alignCompoundCells(column []Cell) {
+func alignCompoundCells(column []Cell, maxWidth int) {
 	subtable := make([]CompoundCell, len(column), len(column))
 	for i, cell := range column {
 		cc := cell.(CompoundCell)
 		subtable[i] = cc
 	}
-	AlignTable(subtable)
+	alignTableTo(subtable, maxWidth)
 }
