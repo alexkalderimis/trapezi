@@ -28,10 +28,11 @@ func (p *CustomPrinter) Fprintf(w io.Writer, format string, a ...interface{}) (i
 }
 
 type SimpleCell struct {
-	Printer CellPrinter
-	Padding int
-	Value   string
-	Align   Alignment
+	Printer     CellPrinter
+	Padding     int
+	Value       string
+	Align       Alignment
+	PaddingRune rune
 }
 
 type CompoundCell struct {
@@ -69,11 +70,25 @@ func (cell *SimpleCell) align(width int) {
 }
 
 func (cell SimpleCell) Render(w io.Writer) (int, error) {
-	logger.Infof("render: Value = %s, Padding = %d", cell.Value, cell.Padding)
+
+	if cell.Padding == 0 {
+		return cell.Printer.Fprintf(w, "%s", cell.Value)
+	}
+	r := cell.PaddingRune
+	if r == 0 {
+		r = ' '
+	}
+	var chars []rune
+	for i := 0; i < cell.Padding; i++ {
+		chars = append(chars, r)
+	}
+	paddingValue := string(chars)
+	logger.Infof("render: Value = %s, Padding = %d, Padded With = %s", cell.Value, cell.Padding, paddingValue)
+
 	if cell.Align == ALIGN_RIGHT {
-		return cell.Printer.Fprintf(w, "%*s%s", -cell.Padding, "", cell.Value)
+		return cell.Printer.Fprintf(w, "%s%s", paddingValue, cell.Value)
 	} else {
-		return cell.Printer.Fprintf(w, "%s%*s", cell.Value, -cell.Padding, "")
+		return cell.Printer.Fprintf(w, "%s%s", cell.Value, paddingValue)
 	}
 }
 
@@ -166,6 +181,11 @@ func Empty() *SimpleCell {
 
 func AlignRight(cell *SimpleCell) *SimpleCell {
 	cell.Align = ALIGN_RIGHT
+	return cell
+}
+
+func PaddedWith(padding rune, cell *SimpleCell) *SimpleCell {
+	cell.PaddingRune = padding
 	return cell
 }
 

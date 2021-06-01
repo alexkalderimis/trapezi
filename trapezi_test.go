@@ -123,6 +123,27 @@ func TestAlignNested(t *testing.T) {
 	assertRenderEql(table, want, t)
 }
 
+func TestPaddingChars(t *testing.T) {
+	rowSep := " | "
+	want := strings.Join([]string{
+		"Name    | Family   | Example",
+		"--------|----------|--------",
+		"German  | Germanic | Tisch  ",
+		"Greek   | Hellenic | τραπέζι",
+		"Italian | Romance  | tavola ",
+	}, "/")
+	cells := []CompoundCell{
+		Join(rowSep, Text("Name"), Text("Family"), Text("Example")),
+		Join("-|-", PaddedWith('-', Empty()), PaddedWith('-', Empty()), PaddedWith('-', Empty())),
+		Join(rowSep, Text("German"), Text("Germanic"), Text("Tisch")),
+		Join(rowSep, Text("Greek"), Text("Hellenic"), Text("τραπέζι")),
+		Join(rowSep, Text("Italian"), Text("Romance"), Text("tavola")),
+	}
+	AlignTable(cells)
+	table := Table("/", cells)
+	assertRenderEql(table, want, t)
+}
+
 // TODO
 // func TestAlignMixedColumn(t *testing.T) {
 //   sepA := " || "
